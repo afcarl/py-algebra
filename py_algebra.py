@@ -29,6 +29,9 @@ class Expr():
             return True
         return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __repr__(self):
         if self._op:
             string = '%s(' % self.OP_NAMES[self._op]
@@ -93,6 +96,9 @@ class Symbol():
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and self.symbol_name == other.symbol_name)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         return self.symbol_name

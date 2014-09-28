@@ -61,6 +61,10 @@ class ParseExpressionTest(unittest.TestCase):
         expr = Expr('*', [Expr('+', [.63, Symbol('x')]), 5])
         self.assertEqual(parse_str(expr_str), expr)
 
+        expr_str = '(.63 + x) + 5'
+        expr = Expr('+', [Expr('+', [.63, Symbol('x')]), 5])
+        self.assertEqual(parse_str(expr_str), expr)
+
     def test_flatten_expr(self):
         expr = Expr('+', [Expr(None, 5), Expr(None, 3)])
         flattened_expr = Expr('+', [5, 3])
