@@ -22,7 +22,7 @@ class Expr():
         self._op = op
 
     def __eq__(self, other):
-        if type(self) == type(other) and self._op == other._op:
+        if isinstance(other, self.__class__) and self._op == other._op:
             for operand, other_operand in zip(self._operands, other._operands):
                 if operand != other_operand:
                     return False
@@ -61,6 +61,9 @@ class Expr():
             self._op = '+'
         self._op = op
 
+    def get_op(self):
+        return self._op
+
     def add_operand(self, operand):
         self._operands.append(operand)
 
@@ -88,7 +91,8 @@ class Symbol():
         self.symbol_name = symbol_name
 
     def __eq__(self, other):
-        return self.symbol_name == other.symbol_name
+        return (isinstance(other, self.__class__)
+                and self.symbol_name == other.symbol_name)
 
     def __repr__(self):
         return self.symbol_name

@@ -2,6 +2,29 @@ import unittest
 
 from py_algebra import *
 
+
+class ExprTest(unittest.TestCase):
+    """Test Expr class"""
+
+    def test_set_op(self):
+        expr = Expr()
+        expr.set_op('+')
+        self.assertEqual(expr.get_op(), '+')
+        self.assertRaises(SetOperationException, expr.set_op, '*')
+
+    def test_add_operand(self):
+        expr = Expr()
+        expr.add_operand(5)
+        expr.add_operand(Symbol('x'))
+        expr.add_operand(Expr())
+        self.assertEqual(expr.num_operands, 3)
+
+    def test_add_operands(self):
+        expr = Expr()
+        expr.add_operands([5, Symbol('x'), Expr()])
+        self.assertEqual(expr.num_operands, 3)
+
+
 class ParseExpressionTest(unittest.TestCase):
     """Test parsing expression strings into Expr objects."""
 
@@ -19,9 +42,25 @@ class ParseExpressionTest(unittest.TestCase):
         expr = Expr('+', [5, Symbol('x')])
         self.assertEqual(parse_str(expr_str), expr)
 
+        expr_str = 'y + x'
+        expr = Expr('+', [Symbol('y'), Symbol('x')])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = 'y*x'
+        expr = Expr('*', [Symbol('y'), Symbol('x')])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = 'y * x'
+        expr = Expr('*', [Symbol('y'), Symbol('x')])
+        self.assertEqual(parse_str(expr_str), expr)
+
     def test_flatten(self):
         expr = Expr('+', [Expr(None, 5), Expr(None, 3)])
         flattened_expr = Expr('+', [5, 3])
+        self.assertEqual(flatten_expr(expr), flattened_expr)
+
+        expr = Expr('+', [Expr(None, Symbol('x')), Expr(None, Symbol('y'))])
+        flattened_expr = Expr('+', [Symbol('x'), Symbol('y')])
         self.assertEqual(flatten_expr(expr), flattened_expr)
 
     def test_find_close_paren_index(self):
