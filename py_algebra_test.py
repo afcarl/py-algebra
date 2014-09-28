@@ -33,9 +33,12 @@ class ParseExpressionTest(unittest.TestCase):
         expr = Expr(None, 5)
         self.assertEqual(parse_str(expr_str), expr)
 
-        expr_str = '5 + 3'
-        expr.set_op('+')
-        expr.add_operand(3)
+        expr_str = '5.3 + 385'
+        expr = Expr('+', [5.3, 385])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '.68 * 2.385'
+        expr = Expr('*', [.68, 2.385])
         self.assertEqual(parse_str(expr_str), expr)
 
         expr_str = '5 + x'
@@ -54,13 +57,22 @@ class ParseExpressionTest(unittest.TestCase):
         expr = Expr('*', [Symbol('y'), Symbol('x')])
         self.assertEqual(parse_str(expr_str), expr)
 
-    def test_flatten(self):
+        expr_str = '(.63 + x) * 5'
+        expr = Expr('*', [Expr('+', [.63, Symbol('x')]), 5])
+        self.assertEqual(parse_str(expr_str), expr)
+
+    def test_flatten_expr(self):
         expr = Expr('+', [Expr(None, 5), Expr(None, 3)])
         flattened_expr = Expr('+', [5, 3])
         self.assertEqual(flatten_expr(expr), flattened_expr)
 
         expr = Expr('+', [Expr(None, Symbol('x')), Expr(None, Symbol('y'))])
         flattened_expr = Expr('+', [Symbol('x'), Symbol('y')])
+        self.assertEqual(flatten_expr(expr), flattened_expr)
+
+        expr = Expr('*', [
+            Expr('+', [Expr(None, .63), Expr(None, Symbol('x'))]), 5])
+        flattened_expr = Expr('*', [Expr('+', [.63, Symbol('x')]), 5])
         self.assertEqual(flatten_expr(expr), flattened_expr)
 
     def test_find_close_paren_index(self):

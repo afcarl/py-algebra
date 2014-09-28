@@ -125,7 +125,7 @@ def parse_str_helper(expr_str):
                 symbol_name += expr_str[index]
                 index += 1
             expr.add_operand(Symbol(symbol_name))
-        elif expr_str[index].isdigit():
+        elif expr_str[index].isdigit() or expr_str[index] == '.':
             num_string = ''
             while (index < len(expr_str) and
                 (expr_str[index].isdigit() or expr_str[index] == '.')):
@@ -195,10 +195,11 @@ def flatten_expr(expr):
     """
     if isinstance(expr, Expr):
         for index, operand in enumerate(expr._operands):
-            if (isinstance(operand, Expr)
-                and not operand.is_op_set() and operand.num_operands == 1):
+            if not isinstance(operand, Expr):
+                continue
+            elif not operand.is_op_set() and operand.num_operands == 1:
                 # Flatten numbers and symbols
-                expr._operands[index] = operand._operands[0]
+                expr._operands[index] = flatten_expr(operand._operands[0])
             else:
                 flatten_expr(operand)
     return expr
