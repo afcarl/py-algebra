@@ -206,6 +206,10 @@ def flatten_expr(expr):
             elif not operand.is_op_set() and operand.num_operands == 1:
                 # Flatten numbers and symbols
                 expr._operands[index] = flatten_expr(operand._operands[0])
+            elif expr.get_op() == operand.get_op():
+                expr._operands.remove(operand)
+                operand = flatten_expr(operand)
+                expr.add_operands(operand._operands)
             else:
                 flatten_expr(operand)
     return expr
