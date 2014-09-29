@@ -24,6 +24,14 @@ class ExprTest(unittest.TestCase):
         expr.add_operands([5, Symbol('x'), Expr()])
         self.assertEqual(expr.num_operands, 3)
 
+    def test_equality_checking(self):
+        expr1 = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
+        expr2 = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
+        self.assertEqual(expr1, expr2)
+
+        expr1 = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
+        expr2 = Expr('+', [5, Expr('*', [1, 2])])
+        self.assertNotEqual(expr1, expr2)
 
 class ParseExpressionTest(unittest.TestCase):
     """Test parsing expression strings into Expr objects."""

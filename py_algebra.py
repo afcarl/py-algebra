@@ -22,7 +22,9 @@ class Expr():
         self._op = op
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__) and self._op == other._op:
+        if (isinstance(other, self.__class__)
+            and self._op == other._op
+            and self.num_operands == other.num_operands):
             for operand, other_operand in zip(self._operands, other._operands):
                 if operand != other_operand:
                     return False
