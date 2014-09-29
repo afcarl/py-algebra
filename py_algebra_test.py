@@ -81,6 +81,54 @@ class ParseExpressionTest(unittest.TestCase):
         expr = Expr('+', [Expr('+', [.63, Symbol('x')]), 5])
         self.assertEqual(parse_str(expr_str), expr)
 
+        expr_str = '(.63 + x)(7 + y)'
+        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), Expr('+', [7, Symbol('y')])])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '5(.63 + x)'
+        expr = Expr('*', [5, Expr('+',[.63, Symbol('x')])])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(5)(.63 + x)'
+        expr = Expr('*', [5, Expr('+',[.63, Symbol('x')])])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(.63 + x)5'
+        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), 5])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(.63 + x)(5)'
+        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), 5])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = 'x(.63 + x)'
+        expr = Expr('*', [Symbol('x'), Expr('+',[.63, Symbol('x')])])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(x)(.63 + x)'
+        expr = Expr('*', [Symbol('x'), Expr('+',[.63, Symbol('x')])])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(.63 + x)x'
+        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), Symbol('x')])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(.63 + x)(x)'
+        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), Symbol('x')])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '(.63 + x)x + y'
+        expr = Expr('+',
+                [
+                    Expr('*', 
+                    [
+                        Expr('+',[.63, Symbol('x')]),
+                        Symbol('x')
+                    ]),
+                    Symbol('y')
+                ])
+        self.assertEqual(parse_str(expr_str), expr)
+
     def test_flatten_expr(self):
         expr = Expr('+', [Expr(None, 5), Expr(None, 3)])
         flattened_expr = Expr('+', [5, 3])

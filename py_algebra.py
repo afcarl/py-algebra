@@ -143,12 +143,21 @@ def parse_str_helper(expr_str):
             except ValueError:
                 raise ParseExpressionException('Invalid number %s' % num_string)
         elif expr_str[index] == '(':
-            close_paren_index = find_close_paren_index(expr_str, 0)
-            # check if * should be added before
+            close_paren_index = find_close_paren_index(expr_str, index)
+            # check if * should be added before (
+            if (index > 0 and
+                (expr_str[index-1].isalpha()
+                or expr_str[index-1].isdigit())):
+                expr.set_op('*')
             expr.add_operand(parse_str_helper(
                 expr_str[(index+1):close_paren_index]))
-            # check if * should be added after
             index = close_paren_index + 1
+            # check if * should be added after )
+            if (index < len(expr_str) and
+                (expr_str[index].isalpha()
+                or expr_str[index].isdigit()
+                or expr_str[index] == '(')):
+                expr.set_op('*')
             continue
         elif expr_str[index] in Expr.OPS:
             if expr.is_op_set:
