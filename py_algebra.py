@@ -224,3 +224,63 @@ def flatten_expr(expr):
             else:
                 flatten_expr(operand)
     return expr
+
+def simplify(expr):
+    """
+    Simplifies an expression by combining operands of the same type.
+
+    Does not modify the expression passed in.
+    Returns a new expression instead.
+
+    Parameters:
+    expr: (Expr object) - the expression to simplify
+
+    Returns:
+    new_expr: (Expr object) - the simplified expression
+    """
+    pass
+
+def substitute(expr, var, new_var)
+    """
+    Substitutes a new number, variable, or expr in the expression.
+
+    This does not simplify the expression.  It simply replaces all occurences
+    of var with new_var.
+
+    Parameters:
+    expr: (Expr object) - the expression to simplify
+    var: (Symbol object or string) - either the string name of the symbol to
+        replace or a Symbol object with that string name.  I.e. passing in
+        Symbol('x') is equivalent to passing in 'x'.
+    new_var:
+        -Type: Anything valid to place in an expression -- a number,
+        Symbol object, string name for Symbol, Expr object, etc
+        -Description: What to replace var with in the expression
+
+    Returns:
+    new_expr: (Expr object) - a new expression that is the result of performing
+        the substitution on the given expr
+    """
+    pass
+
+def evalute(expr, var, new_var):
+    """
+    Evaluates the expression by replacing the given variable with the new value.
+
+    This is equivalent to using substitute and then simplify.
+
+    Parameters:
+    expr: (Expr object) - the expression to simplify
+    var: (Symbol object or string) - either the string name of the symbol to
+        replace or a Symbol object with that string name.  I.e. passing in
+        Symbol('x') is equivalent to passing in 'x'.
+    new_var:
+        -Type: Anything valid to place in an expression -- a number,
+        Symbol object, string name for Symbol, Expr object, etc
+        -Description: What to replace var with in the expression
+
+    Returns:
+    new_expr: (Expr object) - a new expression that is the result of evaluating
+        the given expr
+    """
+    pass
