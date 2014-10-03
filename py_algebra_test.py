@@ -33,6 +33,16 @@ class ExprTest(unittest.TestCase):
         expr2 = Expr('+', [5, Expr('*', [1, 2])])
         self.assertNotEqual(expr1, expr2)
 
+    def test_expr_to_string(self):
+        expr = Expr('+', [5, Symbol('yz')])
+        self.assertEqual('5 + yz', str(expr))
+
+        expr = Expr('*', [Symbol('x'), 8])
+        self.assertEqual('x * 8', str(expr))
+
+        expr = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
+        self.assertEqual('5 + 1 * 2 + z', str(expr))
+
 class ParseExpressionTest(unittest.TestCase):
     """Test parsing expression strings into Expr objects."""
 

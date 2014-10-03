@@ -47,6 +47,15 @@ class Expr():
         string += ')'
         return string
 
+    def __str__(self):
+        string = ''
+        for index, operand in enumerate(self._operands):
+            if index == len(self._operands) - 1:
+                string += str(operand)
+            else:
+                string += '%s %s ' % (str(operand), self._op)
+        return string
+
     def is_op_set(self):
         """Returns True if the operation is set."""
         return bool(self._op)
@@ -240,7 +249,7 @@ def simplify(expr):
     """
     pass
 
-def substitute(expr, var, new_var)
+def substitute(expr, var, new_var):
     """
     Substitutes a new number, variable, or expr in the expression.
 
