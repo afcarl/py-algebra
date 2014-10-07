@@ -12,11 +12,11 @@ class Expr():
             operands of this expression.
         """
         if not operands:
-            self._operands = []
+            self.operands = []
         elif isinstance(operands, list):
-            self._operands = operands
+            self.operands = operands
         else:
-            self._operands = [operands]
+            self.operands = [operands]
         if op and op not in self.OPS:
             raise SetOperationException('Invalid operation')
         self._op = op
@@ -25,7 +25,7 @@ class Expr():
         if (isinstance(other, self.__class__)
             and self._op == other._op
             and self.num_operands == other.num_operands):
-            for operand, other_operand in zip(self._operands, other._operands):
+            for operand, other_operand in zip(self.operands, other.operands):
                 if operand != other_operand:
                     return False
             return True
@@ -39,8 +39,8 @@ class Expr():
             string = '%s(' % self.OP_NAMES[self._op]
         else:
             string = '('
-        for index, operand in enumerate(self._operands):
-            if index == len(self._operands) - 1:
+        for index, operand in enumerate(self.operands):
+            if index == len(self.operands) - 1:
                 string += repr(operand)
             else:
                 string += '%s, ' % repr(operand)
@@ -49,8 +49,8 @@ class Expr():
 
     def __str__(self):
         string = ''
-        for index, operand in enumerate(self._operands):
-            if index == len(self._operands) - 1:
+        for index, operand in enumerate(self.operands):
+            if index == len(self.operands) - 1:
                 string += str(operand)
             else:
                 string += '%s %s ' % (str(operand), self._op)
@@ -79,7 +79,7 @@ class Expr():
         return self._op
 
     def add_operand(self, operand):
-        self._operands.append(operand)
+        self.operands.append(operand)
 
     def add_operands(self, operands):
         """
@@ -87,11 +87,11 @@ class Expr():
 
         operands: (list) list of operands
         """
-        self._operands.extend(operands)
+        self.operands.extend(operands)
 
     @property
     def num_operands(self):
-        return len(self._operands)
+        return len(self.operands)
 
 
 class SetOperationException(Exception):
@@ -220,16 +220,16 @@ def flatten_expr(expr):
     expr: (Expr object) - the expression to flatten
     """
     if isinstance(expr, Expr):
-        for index, operand in enumerate(expr._operands):
+        for index, operand in enumerate(expr.operands):
             if not isinstance(operand, Expr):
                 continue
             elif not operand.is_op_set() and operand.num_operands == 1:
                 # Flatten numbers and symbols
-                expr._operands[index] = flatten_expr(operand._operands[0])
+                expr.operands[index] = flatten_expr(operand.operands[0])
             elif expr.get_op() == operand.get_op():
-                expr._operands.remove(operand)
+                expr.operands.remove(operand)
                 operand = flatten_expr(operand)
-                expr.add_operands(operand._operands)
+                expr.add_operands(operand.operands)
             else:
                 flatten_expr(operand)
     return expr

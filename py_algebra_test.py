@@ -138,7 +138,7 @@ class ParseExpressionTest(unittest.TestCase):
         expr_str = '(.63 + x)x + y'
         expr = Expr('+',
                 [
-                    Expr('*', 
+                    Expr('*',
                     [
                         Expr('+',[.63, Symbol('x')]),
                         Symbol('x')
