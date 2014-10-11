@@ -4,33 +4,71 @@ from py_algebra import *
 
 
 class ExprTest(unittest.TestCase):
-    """Test Expr class"""
+    """Tests for Expr class"""
 
-    def test_set_op(self):
-        expr = Expr()
-        expr.set_op('+')
-        self.assertEqual(expr.get_op(), '+')
-        self.assertRaises(SetOperationException, expr.set_op, '*')
+    def test_expr_creation(self):
+        """Test the init method of Expr"""
+        # Values can only be terminals or operators
+        self.assertRaises(ExprException, Expr, '5')
+        self.assertRaises(ExprException, Expr, 'a')
+        # Operator must have operands
+        for op in Expr.OPS:
+            self.assertRaises(ExprException, Expr, op)
+        # A node with terminal value must be a leaf node
+        self.assertRaises(ExprException, Expr, 5, [Expr(8), Expr(9)])
+
+        expr = Expr(6)
+        self.assertEqual(expr.value, 6)
+        self.assertEqual(expr.operands, [])
+
+        expr = Expr('+', [Expr(6), Expr(Symbol('y'))])
+        self.assertEqual(expr.value, '+')
+        self.assertEqual(expr.operands, [Expr(6), Expr(Symbol('y'))])
 
     def test_add_operand(self):
-        expr = Expr()
-        expr.add_operand(5)
-        expr.add_operand(Symbol('x'))
-        expr.add_operand(Expr())
+        # An expression w/o an operator as value cannot have operands
+        expr = Expr(6)
+        self.assertRaises(ExprException, expr.add_operand, Expr(6))
+        self.assertRaises(ExprException, expr.add_operand, Expr(Symbol('x')))
+
+        # Operands must be expressions
+        expr = Expr('+', [Expr(6)])
+        with self.assertRaises(ExprException,
+                msg='Operand must be an expression'):
+            expr.add_operand(5)
+        with self.assertRaises(ExprException,
+                msg='Operand must be an expression'):
+            expr.add_operand(5)
+            expr.add_operand(Symbol('x'))
+        expr.add_operand(Expr(5))
+        expr.add_operand(Expr(Symbol('x')))
         self.assertEqual(expr.num_operands, 3)
 
     def test_add_operands(self):
-        expr = Expr()
-        expr.add_operands([5, Symbol('x'), Expr()])
+        # An expression w/o an operator as value cannot have operands
+        expr = Expr(6)
+        self.assertRaises(ExprException, expr.add_operand,
+                [Expr(6), Expr(Symbol('x'))])
+
+        # Operands must be expressions
+        expr = Expr('*', [Expr(7)])
+        with self.assertRaises(ExprException,
+                msg='Operands must be expressions'):
+            expr.add_operands([Expr(7), 5, Symbol('x')])
+        expr.add_operands([Expr(7), Expr(Symbol('x'))])
         self.assertEqual(expr.num_operands, 3)
 
     def test_equality_checking(self):
-        expr1 = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
-        expr2 = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
+        expr1 = Expr('+', [
+            Expr(5), Expr('*', [Expr(1), Expr(2)]), Expr(Symbol('z'))])
+        expr2 = Expr('+', [
+            Expr(5), Expr('*', [Expr(1), Expr(2)]), Expr(Symbol('z'))])
         self.assertEqual(expr1, expr2)
 
-        expr1 = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
-        expr2 = Expr('+', [5, Expr('*', [1, 2])])
+        expr1 = Expr('+', [
+            Expr(5), Expr('*', [Expr(1), Expr(2)]), Expr(Symbol('z'))])
+        expr2 = Expr('+', [
+            Expr(5), Expr('*', [Expr(1), Expr(2)])])
         self.assertNotEqual(expr1, expr2)
 
     def test_expr_to_string(self):
@@ -144,6 +182,25 @@ class ParseExpressionTest(unittest.TestCase):
                         Symbol('x')
                     ]),
                     Symbol('y')
+                ])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '5 * x + 2 * y'
+        expr = Expr('+',
+                [
+                    Expr('*',
+                        [5, Symbol('x')]),
+                    Expr('*',
+                        [2, Symbol('y')])
+                ])
+        self.assertEqual(parse_str(expr_str), expr)
+
+        expr_str = '5 + x * y + 8'
+        expr = Expr('+',
+                [   5,
+                    Expr('*',
+                        [Symbol('x'), Symbol('y')]),
+                    8
                 ])
         self.assertEqual(parse_str(expr_str), expr)
 

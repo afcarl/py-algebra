@@ -1,29 +1,51 @@
-class Expr():
-    """An expression."""
-    OPS = ['+', '*']
-    OP_NAMES = {'+': 'Add', '*': 'Mul'}
+from numbers import Number
 
-    def __init__(self, op=None, operands=None):
+class Expr():
+    """
+    An expression.  Is generally a node in a larger expression tree.
+
+    A terminal is considered to be a Symbol or a number.
+    (instance of numbers.Number). Examples: Symbol('x'), 5, 5.585, etc.
+
+    An operator is a valid char from Expr.OPS.
+    """
+    OPS = ['+', '*', '^', '/']
+    OP_NAMES = {'+': 'Add', '*': 'Mul', '^': 'Exp', '/': 'Div'}
+
+    def __init__(self, value, operands=None):
         """
         Constructor for Expr.
 
-        op: (char) The operation.  Must be one listed in OPS.
-        operands: (symbol / number or list of symbols and numbers) The
-            operands of this expression.
+        value: (a terminal or operator) - The value.  Must be one listed in OPS.
+        operands: (list of Exprs) - The operands (children) of this expression.
         """
-        if not operands:
+        if not value:
+            raise ExprException('Node must have a value')
+        if self.is_terminal(value):
+            if operands==None:
+                self.value = value
+                self.operands = []
+            else:
+                raise ExprException(
+                        'A node with a terminal value cannot have any'
+                        'operands.')
+        elif self.is_operator(value):
+            # TODO(smilli): Maybe don't allow no operands when the value
+            # is an operator
+            if operands==None:
+                raise ExprException(
+                        'An expression with an operator as a value must have'
+                        ' operands')
+            self.value = value
             self.operands = []
-        elif isinstance(operands, list):
-            self.operands = operands
+            self.add_operands(operands)
         else:
-            self.operands = [operands]
-        if op and op not in self.OPS:
-            raise SetOperationException('Invalid operation')
-        self._op = op
+            raise ExprException('Invalid value for expression node: %s' %
+                    str(value))
 
     def __eq__(self, other):
         if (isinstance(other, self.__class__)
-            and self._op == other._op
+            and self.value == other.value
             and self.num_operands == other.num_operands):
             for operand, other_operand in zip(self.operands, other.operands):
                 if operand != other_operand:
@@ -35,8 +57,8 @@ class Expr():
         return not self.__eq__(other)
 
     def __repr__(self):
-        if self._op:
-            string = '%s(' % self.OP_NAMES[self._op]
+        if self.value:
+            string = '%s(' % self.OP_NAMES[self.value]
         else:
             string = '('
         for index, operand in enumerate(self.operands):
@@ -53,33 +75,26 @@ class Expr():
             if index == len(self.operands) - 1:
                 string += str(operand)
             else:
-                string += '%s %s ' % (str(operand), self._op)
+                string += '%s %s ' % (str(operand), self.value)
         return string
 
-    def is_op_set(self):
-        """Returns True if the operation is set."""
-        return bool(self._op)
+    def is_operator(self, value=None):
+        if value == None:
+            value = self.value
+        return value in self.OPS 
 
-    def set_op(self, op):
-        """
-        Sets the operation of this expression if previously unset.
-
-        Throws:
-            SetOperationException when the operation is already set or is invalid
-        """
-        if self._op:
-            raise SetOperationException('Operation already set on expression')
-        if op not in self.OPS:
-            raise SetOperationException('Invalid operation')
-        if op == '-':
-            self._op = '+'
-        self._op = op
-
-    def get_op(self):
-        return self._op
+    def is_terminal(self, value=None):
+        if value == None:
+            value = self.value
+        return isinstance(value, Symbol) or isinstance(value, Number)
 
     def add_operand(self, operand):
-        self.operands.append(operand)
+        if not self.is_operator():
+            raise ExprException('This node\'s value is not an operator')
+        if isinstance(operand, Expr):
+            self.operands.append(operand)
+        else:
+            raise ExprException('Operand must be an expression')
 
     def add_operands(self, operands):
         """
@@ -87,15 +102,20 @@ class Expr():
 
         operands: (list) list of operands
         """
-        self.operands.extend(operands)
+        if not self.is_operator():
+            raise ExprException('This node\'s value is not an operator')
+        if all([isinstance(operand, Expr) for operand in operands]):
+            self.operands.extend(operands)
+        else:
+            raise ExprException('Operands must be expressions')
 
     @property
     def num_operands(self):
         return len(self.operands)
 
 
-class SetOperationException(Exception):
-    """Thrown when an error occurs when setting the op of an expression."""
+class ExprException(Exception):
+    """Thrown when an error occurs when calling a method of an Expr."""
     pass
 
 
@@ -121,7 +141,7 @@ class Fraction():
         self.denom = denom
 
 
-class ParseExpressionException(Exception):
+class ParseExprException(Exception):
     """Thrown when a string cannot be parsed into an expression."""
     pass
 
@@ -152,7 +172,7 @@ def parse_str_helper(expr_str):
                 number = float(num_string)
                 expr.add_operand(number)
             except ValueError:
-                raise ParseExpressionException('Invalid number %s' % num_string)
+                raise ParseExprException('Invalid number %s' % num_string)
         elif expr_str[index] == '(':
             close_paren_index = find_close_paren_index(expr_str, index)
             # check if * should be added before (
@@ -202,7 +222,7 @@ def find_close_paren_index(expr_str, open_paren_ind):
     while stack:
         index += 1
         if (index >= len(expr_str)):
-            raise ParseExpressionException('Malformed paranthesees')
+            raise ParseExprException('Malformed paranthesees')
         elif (expr_str[index] == '('):
             stack.append(expr_str[index])
         elif (expr_str[index] == ')'):
