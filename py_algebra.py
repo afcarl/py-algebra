@@ -1,4 +1,9 @@
 from numbers import Number
+from collections import Counter
+
+_OPS = ['+', '*', '^', '/']
+_OP_PRECEDENCES = {'+': 1, '*': 2, '/': 2, '^': 3, '(': 0}
+_OP_NAMES = {'+': 'Add', '*': 'Mul', '^': 'Exp', '/': 'Div'}
 
 class Expr():
     """
@@ -9,8 +14,6 @@ class Expr():
 
     An operator is a valid char from Expr.OPS.
     """
-    OPS = ['+', '*', '^', '/']
-    OP_NAMES = {'+': 'Add', '*': 'Mul', '^': 'Exp', '/': 'Div'}
 
     def __init__(self, value, operands=None):
         """
@@ -45,22 +48,17 @@ class Expr():
 
     def __eq__(self, other):
         if (isinstance(other, self.__class__)
-            and self.value == other.value
-            and self.num_operands == other.num_operands):
-            for operand, other_operand in zip(self.operands, other.operands):
-                if operand != other_operand:
-                    return False
-            return True
+                and self.value == other.value):
+            return Counter(self.operands) == Counter(other.operands)
         return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __repr__(self):
-        if self.value:
-            string = '%s(' % self.OP_NAMES[self.value]
-        else:
-            string = '('
+        if not self.operands:
+            return repr(self.value)
+        string = '%s(' % _OP_NAMES[self.value]
         for index, operand in enumerate(self.operands):
             if index == len(self.operands) - 1:
                 string += repr(operand)
@@ -70,6 +68,8 @@ class Expr():
         return string
 
     def __str__(self):
+        if not self.operands:
+            return str(self.value)
         string = ''
         for index, operand in enumerate(self.operands):
             if index == len(self.operands) - 1:
@@ -78,10 +78,21 @@ class Expr():
                 string += '%s %s ' % (str(operand), self.value)
         return string
 
+    def __hash__(self):
+        # The value of this hash will change when the obj changes
+        # Should only currently be used in __eq__
+        # TODO(smilli): Find better way to do this
+        if not self.operands:
+            return hash(self.value)
+        hash_value = hash(self.value)
+        for operand in self.operands:
+            hash_value ^= hash(operand)
+        return hash_value
+
     def is_operator(self, value=None):
         if value == None:
             value = self.value
-        return value in self.OPS 
+        return value in _OPS
 
     def is_terminal(self, value=None):
         if value == None:
@@ -131,6 +142,9 @@ class Symbol():
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self.symbol_name)
+
     def __repr__(self):
         return self.symbol_name
 
@@ -146,14 +160,22 @@ class ParseExprException(Exception):
     pass
 
 
-def parse_str(expr_str):
+def parse(expr_str):
     """Parses a string into an Expr object."""
-    expr = parse_str_helper(expr_str)
-    return flatten_expr(expr)
+    expr_str = expr_str.replace(' ', '')
+    expr = _parse_helper(expr_str)
+    expr = flatten_expr(expr)
+    return expr
 
 
-def parse_str_helper(expr_str):
-    expr = Expr()
+def _parse_helper(expr_str):
+    """
+    Converts expression string to Expr object.
+
+    Uses Djikstra's Shunting Yard algorithm.
+    """
+    output = []
+    op_stack = []
     index = 0
     while index < len(expr_str):
         if expr_str[index].isalpha():
@@ -161,7 +183,7 @@ def parse_str_helper(expr_str):
             while index < len(expr_str) and expr_str[index].isalpha():
                 symbol_name += expr_str[index]
                 index += 1
-            expr.add_operand(Symbol(symbol_name))
+            output.append(Expr(Symbol(symbol_name)))
         elif expr_str[index].isdigit() or expr_str[index] == '.':
             num_string = ''
             while (index < len(expr_str) and
@@ -170,88 +192,59 @@ def parse_str_helper(expr_str):
                 index += 1
             try:
                 number = float(num_string)
-                expr.add_operand(number)
+                output.append(Expr(number))
             except ValueError:
                 raise ParseExprException('Invalid number %s' % num_string)
         elif expr_str[index] == '(':
-            close_paren_index = find_close_paren_index(expr_str, index)
-            # check if * should be added before (
-            if (index > 0 and
-                (expr_str[index-1].isalpha()
-                or expr_str[index-1].isdigit())):
-                expr.set_op('*')
-            expr.add_operand(parse_str_helper(
-                expr_str[(index+1):close_paren_index]))
-            index = close_paren_index + 1
-            # check if * should be added after )
-            if (index < len(expr_str) and
-                (expr_str[index].isalpha()
-                or expr_str[index].isdigit()
-                or expr_str[index] == '(')):
-                expr.set_op('*')
-            continue
-        elif expr_str[index] in Expr.OPS:
-            if expr.is_op_set:
-                # check to make sure not malformed
-                old_expr = expr
-                expr = Expr(expr_str[index])
-                expr.add_operand(old_expr)
-            else:
-                expr.set_op(expr_str[index])
-            expr.add_operand(parse_str_helper(expr_str[(index+1):]))
-            return expr
-        else:
-            # if space just increment index
+            op_stack.append(expr_str[index])
             index += 1
-    return expr
+        elif expr_str[index] == ')':
+            while op_stack and op_stack[-1] != '(':
+                _pop_oper(output, op_stack)
+            if not op_stack:
+                raise ParseExprException('Mismatched parentheses')
+            op_stack.pop() # pop the '('
+            index += 1
+        elif expr_str[index] in _OPS:
+            new_op = expr_str[index]
+            while (op_stack and
+                _OP_PRECEDENCES[new_op] <= _OP_PRECEDENCES[op_stack[-1]]):
+                    _pop_oper(output, op_stack)
+            op_stack.append(new_op)
+            index += 1
+    while op_stack:
+        if op_stack[-1] == '(':
+            raise ParseExprException('Mismatched parentheses')
+        _pop_oper(output, op_stack)
+    if len(output) > 1:
+        raise ParseExprException('Malformed expression')
+    return output[0]
 
 
-def find_close_paren_index(expr_str, open_paren_ind):
-    """
-    Finds the index of the closing paranthesees in expr_str.
-
-    Finds the index of the close paren corresponding to the open paren at
-    the index provided in expr_str.
-
-    expr_str: (string) The string to search in
-    open_paren_ind: (int) The index of the open paren to match with
-    """
-    stack = []
-    stack.append(expr_str[open_paren_ind])
-    index = open_paren_ind
-    while stack:
-        index += 1
-        if (index >= len(expr_str)):
-            raise ParseExprException('Malformed paranthesees')
-        elif (expr_str[index] == '('):
-            stack.append(expr_str[index])
-        elif (expr_str[index] == ')'):
-            stack.pop()
-    return index
-
+def _pop_oper(output, op_stack):
+    """Pops an op off the stack and applies it to the operands in the output"""
+    op = op_stack.pop()
+    operand2 = output.pop()
+    operand1 = output.pop()
+    output.append(Expr(op, [operand1, operand2]))
 
 def flatten_expr(expr):
     """
     Flattens an Expr object.
 
-    At the end of this there should be no Expr objects without operations
-    set.
+    At the end of this there should be no operators that have the same
+    operator as a child.  For example no '+' should have a '+' as a child.
 
     expr: (Expr object) - the expression to flatten
     """
-    if isinstance(expr, Expr):
-        for index, operand in enumerate(expr.operands):
-            if not isinstance(operand, Expr):
-                continue
-            elif not operand.is_op_set() and operand.num_operands == 1:
-                # Flatten numbers and symbols
-                expr.operands[index] = flatten_expr(operand.operands[0])
-            elif expr.get_op() == operand.get_op():
-                expr.operands.remove(operand)
-                operand = flatten_expr(operand)
-                expr.add_operands(operand.operands)
-            else:
-                flatten_expr(operand)
+    # TODO(smilli): Still need to implement this for '/', '^'
+    if not expr.operands:
+        return expr
+    for index, operand in enumerate(expr.operands):
+        operand = flatten_expr(operand)
+        if operand.value == expr.value:
+            expr.operands.remove(operand)
+            expr.add_operands(operand.operands)
     return expr
 
 def simplify(expr):

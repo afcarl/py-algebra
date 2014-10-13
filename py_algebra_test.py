@@ -8,11 +8,14 @@ class ExprTest(unittest.TestCase):
 
     def test_expr_creation(self):
         """Test the init method of Expr"""
+        # Node must have a value
+        self.assertRaises(ExprException, Expr, None)
+        self.assertRaises(ExprException, Expr, None, Expr(5))
         # Values can only be terminals or operators
         self.assertRaises(ExprException, Expr, '5')
         self.assertRaises(ExprException, Expr, 'a')
         # Operator must have operands
-        for op in Expr.OPS:
+        for op in ['+', '*', '/', '^']:
             self.assertRaises(ExprException, Expr, op)
         # A node with terminal value must be a leaf node
         self.assertRaises(ExprException, Expr, 5, [Expr(8), Expr(9)])
@@ -72,160 +75,234 @@ class ExprTest(unittest.TestCase):
         self.assertNotEqual(expr1, expr2)
 
     def test_expr_to_string(self):
-        expr = Expr('+', [5, Symbol('yz')])
+        expr = Expr('+', [Expr(5), Expr(Symbol('yz'))])
         self.assertEqual('5 + yz', str(expr))
 
-        expr = Expr('*', [Symbol('x'), 8])
+        expr = Expr('*', [Expr(Symbol('x')), Expr(8)])
         self.assertEqual('x * 8', str(expr))
 
-        expr = Expr('+', [5, Expr('*', [1, 2]), Symbol('z')])
+        expr = Expr('+',
+                [
+                    Expr(5), Expr('*', [Expr(1), Expr(2)]),
+                    Expr(Symbol('z'))
+                ])
         self.assertEqual('5 + 1 * 2 + z', str(expr))
 
 class ParseExpressionTest(unittest.TestCase):
     """Test parsing expression strings into Expr objects."""
 
-    def test_parse_str(self):
+    def test_parse(self):
         expr_str = '5'
-        expr = Expr(None, 5)
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr(5)
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5.3 + 385'
-        expr = Expr('+', [5.3, 385])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [Expr(5.3), Expr(385)])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '.68 * 2.385'
-        expr = Expr('*', [.68, 2.385])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('*', [Expr(.68), Expr(2.385)])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5 + x'
-        expr = Expr('+', [5, Symbol('x')])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [Expr(5), Expr(Symbol('x'))])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = 'y + x'
-        expr = Expr('+', [Symbol('y'), Symbol('x')])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [Expr(Symbol('y')), Expr(Symbol('x'))])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = 'y + x * 5'
-        expr = Expr('+', [Symbol('y'), Expr('*', [Symbol('x'), 5])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [
+            Expr(Symbol('y')),
+            Expr('*', [
+                Expr(Symbol('x')),
+                Expr(5)
+            ])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = 'y*x'
-        expr = Expr('*', [Symbol('y'), Symbol('x')])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('*', [Expr(Symbol('y')), Expr(Symbol('x'))])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = 'y * x'
-        expr = Expr('*', [Symbol('y'), Symbol('x')])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('*', [Expr(Symbol('y')), Expr(Symbol('x'))])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5 + x + 3'
-        expr = Expr('+', [5, Symbol('x'), 3])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [Expr(5), Expr(Symbol('x')), Expr(3)])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5 * x * 3'
-        expr = Expr('*', [5, Symbol('x'), 3])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('*', [Expr(5), Expr(Symbol('x')), Expr(3)])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5 * x * 3 + y'
-        expr = Expr('*', [5, Symbol('x'), Expr('+', [3, Symbol('y')])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [
+            Expr(Symbol('y')),
+            Expr('*', [
+                Expr(5),
+                Expr(Symbol('x')),
+                Expr(3)
+            ])
+        ])
+        expr = self.assertEqual(parse(expr_str), expr)
 
         expr_str = '(.63 + x) * 5'
-        expr = Expr('*', [Expr('+', [.63, Symbol('x')]), 5])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('*', [
+            Expr('+', [Expr(.63), Expr(Symbol('x'))]),
+            Expr(5)
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '(.63 + x) + 5'
-        expr = Expr('+', [Expr('+', [.63, Symbol('x')]), 5])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [Expr(.63), Expr(Symbol('x')), Expr(5)])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(.63 + x)(7 + y)'
-        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), Expr('+', [7, Symbol('y')])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(.63 + x) * (7 + y)'
+        expr = Expr('*', [
+            Expr('+',[
+                Expr(.63),
+                Expr(Symbol('x'))
+            ]),
+            Expr('+', [
+                Expr(7),
+                Expr(Symbol('y'))
+            ])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '5(.63 + x)'
-        expr = Expr('*', [5, Expr('+',[.63, Symbol('x')])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '5 * (.63 + x)'
+        expr = Expr('*', [
+            Expr(5),
+            Expr('+',[
+                Expr(.63),
+                Expr(Symbol('x'))
+            ])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(5)(.63 + x)'
-        expr = Expr('*', [5, Expr('+',[.63, Symbol('x')])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(5) * (.63 + x)'
+        expr = Expr('*', [
+            Expr(5),
+            Expr('+',[
+                Expr(.63),
+                Expr(Symbol('x'))
+            ])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(.63 + x)5'
-        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), 5])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(.63 + x) * 5'
+        expr = Expr('*', [
+            Expr('+',[
+                Expr(.63),
+                Expr(Symbol('x'))
+            ]),
+            Expr(5)
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(.63 + x)(5)'
-        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), 5])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(.63 + x) * (5)'
+        expr = Expr('*', [
+            Expr('+',[Expr(.63), Expr(Symbol('x'))]),
+            Expr(5)
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = 'x(.63 + x)'
-        expr = Expr('*', [Symbol('x'), Expr('+',[.63, Symbol('x')])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = 'x * (.63 + x)'
+        expr = Expr('*', [
+            Expr(Symbol('x')),
+            Expr('+',[
+                Expr(.63),
+                Expr(Symbol('x'))
+            ])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(x)(.63 + x)'
-        expr = Expr('*', [Symbol('x'), Expr('+',[.63, Symbol('x')])])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(x) * (.63 + x)'
+        expr = Expr('*', [
+            Expr(Symbol('x')),
+            Expr('+', [Expr(.63), Expr(Symbol('x'))])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(.63 + x)x'
-        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), Symbol('x')])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(.63 + x) * x'
+        expr = Expr('*', [
+            Expr('+',[Expr(.63), Expr(Symbol('x'))]),
+            Expr(Symbol('x'))
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(.63 + x)(x)'
-        expr = Expr('*', [Expr('+',[.63, Symbol('x')]), Symbol('x')])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(.63 + x) * (x)'
+        expr = Expr('*', [
+            Expr('+',[Expr(.63), Expr(Symbol('x'))]),
+            Expr(Symbol('x'))
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
-        expr_str = '(.63 + x)x + y'
-        expr = Expr('+',
-                [
-                    Expr('*',
-                    [
-                        Expr('+',[.63, Symbol('x')]),
-                        Symbol('x')
-                    ]),
-                    Symbol('y')
-                ])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr_str = '(.63 + x) * x + y'
+        expr = Expr('+', [
+            Expr('*',
+            [
+                Expr('+',[Expr(.63), Expr(Symbol('x'))]),
+                Expr(Symbol('x'))
+            ]),
+            Expr(Symbol('y'))
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5 * x + 2 * y'
-        expr = Expr('+',
-                [
-                    Expr('*',
-                        [5, Symbol('x')]),
-                    Expr('*',
-                        [2, Symbol('y')])
-                ])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [
+            Expr('*',
+                [Expr(5), Expr(Symbol('x'))]),
+            Expr('*',
+                [Expr(2), Expr(Symbol('y'))])
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
         expr_str = '5 + x * y + 8'
-        expr = Expr('+',
-                [   5,
-                    Expr('*',
-                        [Symbol('x'), Symbol('y')]),
-                    8
-                ])
-        self.assertEqual(parse_str(expr_str), expr)
+        expr = Expr('+', [
+            Expr(5),
+            Expr('*',[Expr(Symbol('x')), Expr(Symbol('y'))]),
+            Expr(8)
+        ])
+        self.assertEqual(parse(expr_str), expr)
 
     def test_flatten_expr(self):
-        expr = Expr('+', [Expr(None, 5), Expr(None, 3)])
-        flattened_expr = Expr('+', [5, 3])
-        self.assertEqual(flatten_expr(expr), flattened_expr)
-
-        expr = Expr('+', [Expr(None, Symbol('x')), Expr(None, Symbol('y'))])
-        flattened_expr = Expr('+', [Symbol('x'), Symbol('y')])
+        expr = Expr('+', [
+            Expr('+', [Expr(Symbol('x')), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        flattened_expr = Expr('+', [
+            Expr(Symbol('x')),
+            Expr(3),
+            Expr(Symbol('z'))
+        ])
         self.assertEqual(flatten_expr(expr), flattened_expr)
 
         expr = Expr('*', [
-            Expr('+', [Expr(None, .63), Expr(None, Symbol('x'))]), 5])
-        flattened_expr = Expr('*', [Expr('+', [.63, Symbol('x')]), 5])
+            Expr('*', [Expr(Symbol('x')), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        flattened_expr = Expr('*', [
+            Expr(Symbol('x')),
+            Expr(3),
+            Expr(Symbol('z'))
+        ])
         self.assertEqual(flatten_expr(expr), flattened_expr)
 
-    def test_find_close_paren_index(self):
-        expr_str = '5 * (4 + 6)'
-        self.assertEqual(find_close_paren_index(expr_str, 4), 10)
+        expr = Expr('*', [
+            Expr('+', [Expr(Symbol('x')), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        self.assertEqual(flatten_expr(expr), expr)
 
-        expr_str = '(((h)))'
-        self.assertEqual(find_close_paren_index(expr_str, 0), 6)
-        self.assertEqual(find_close_paren_index(expr_str, 1), 5)
-        self.assertEqual(find_close_paren_index(expr_str, 2), 4)
+        expr = Expr('+', [
+            Expr('*', [Expr(Symbol('x')), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        self.assertEqual(flatten_expr(expr), expr)
 
 
 if __name__ == '__main__':
