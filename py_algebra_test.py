@@ -88,29 +88,29 @@ class ExprTest(unittest.TestCase):
                 ])
         self.assertEqual('5 + 1 * 2 + z', str(expr))
 
-class ParseExpressionTest(unittest.TestCase):
+class ParseTest(unittest.TestCase):
     """Test parsing expression strings into Expr objects."""
 
     def test_parse(self):
         expr_str = '5'
         expr = Expr(5)
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5.3 + 385'
         expr = Expr('+', [Expr(5.3), Expr(385)])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '.68 * 2.385'
         expr = Expr('*', [Expr(.68), Expr(2.385)])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 + x'
         expr = Expr('+', [Expr(5), Expr(Symbol('x'))])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = 'y + x'
         expr = Expr('+', [Expr(Symbol('y')), Expr(Symbol('x'))])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = 'y + x * 5'
         expr = Expr('+', [
@@ -120,23 +120,23 @@ class ParseExpressionTest(unittest.TestCase):
                 Expr(5)
             ])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = 'y*x'
         expr = Expr('*', [Expr(Symbol('y')), Expr(Symbol('x'))])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = 'y * x'
         expr = Expr('*', [Expr(Symbol('y')), Expr(Symbol('x'))])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 + x + 3'
         expr = Expr('+', [Expr(5), Expr(Symbol('x')), Expr(3)])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 * x * 3'
         expr = Expr('*', [Expr(5), Expr(Symbol('x')), Expr(3)])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 * x * 3 + y'
         expr = Expr('+', [
@@ -147,18 +147,18 @@ class ParseExpressionTest(unittest.TestCase):
                 Expr(3)
             ])
         ])
-        expr = self.assertEqual(parse(expr_str), expr)
+        expr = self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * 5'
         expr = Expr('*', [
             Expr('+', [Expr(.63), Expr(Symbol('x'))]),
             Expr(5)
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) + 5'
         expr = Expr('+', [Expr(.63), Expr(Symbol('x')), Expr(5)])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * (7 + y)'
         expr = Expr('*', [
@@ -171,7 +171,7 @@ class ParseExpressionTest(unittest.TestCase):
                 Expr(Symbol('y'))
             ])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 * (.63 + x)'
         expr = Expr('*', [
@@ -181,7 +181,7 @@ class ParseExpressionTest(unittest.TestCase):
                 Expr(Symbol('x'))
             ])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(5) * (.63 + x)'
         expr = Expr('*', [
@@ -191,7 +191,7 @@ class ParseExpressionTest(unittest.TestCase):
                 Expr(Symbol('x'))
             ])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * 5'
         expr = Expr('*', [
@@ -201,14 +201,14 @@ class ParseExpressionTest(unittest.TestCase):
             ]),
             Expr(5)
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * (5)'
         expr = Expr('*', [
             Expr('+',[Expr(.63), Expr(Symbol('x'))]),
             Expr(5)
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = 'x * (.63 + x)'
         expr = Expr('*', [
@@ -218,28 +218,28 @@ class ParseExpressionTest(unittest.TestCase):
                 Expr(Symbol('x'))
             ])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(x) * (.63 + x)'
         expr = Expr('*', [
             Expr(Symbol('x')),
             Expr('+', [Expr(.63), Expr(Symbol('x'))])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * x'
         expr = Expr('*', [
             Expr('+',[Expr(.63), Expr(Symbol('x'))]),
             Expr(Symbol('x'))
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * (x)'
         expr = Expr('*', [
             Expr('+',[Expr(.63), Expr(Symbol('x'))]),
             Expr(Symbol('x'))
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '(.63 + x) * x + y'
         expr = Expr('+', [
@@ -250,7 +250,7 @@ class ParseExpressionTest(unittest.TestCase):
             ]),
             Expr(Symbol('y'))
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 * x + 2 * y'
         expr = Expr('+', [
@@ -259,7 +259,7 @@ class ParseExpressionTest(unittest.TestCase):
             Expr('*',
                 [Expr(2), Expr(Symbol('y'))])
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
         expr_str = '5 + x * y + 8'
         expr = Expr('+', [
@@ -267,7 +267,7 @@ class ParseExpressionTest(unittest.TestCase):
             Expr('*',[Expr(Symbol('x')), Expr(Symbol('y'))]),
             Expr(8)
         ])
-        self.assertEqual(parse(expr_str), expr)
+        self.assertEqual(Parser.parse(expr_str), expr)
 
     def test_flatten_expr(self):
         expr = Expr('+', [
