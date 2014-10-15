@@ -3,7 +3,7 @@ import unittest
 from py_algebra import *
 
 
-class ExprTest(unittest.TestCase):
+class TestExpr(unittest.TestCase):
     """Tests for Expr class"""
 
     def test_expr_creation(self):
@@ -88,7 +88,7 @@ class ExprTest(unittest.TestCase):
                 ])
         self.assertEqual('5 + 1 * 2 + z', str(expr))
 
-class ParseTest(unittest.TestCase):
+class TestParse(unittest.TestCase):
     """Test parsing expression strings into Expr objects."""
 
     def test_parse(self):
@@ -303,6 +303,73 @@ class ParseTest(unittest.TestCase):
             Expr(Symbol('z'))
         ])
         self.assertEqual(flatten_expr(expr), expr)
+
+
+class TestOperations(unittest.TestCase):
+
+    def test_substitute(self):
+        expr = Expr(Symbol('x'))
+        substituted = substitute(expr, Symbol('x'), Symbol('y'))
+        self.assertEqual(substituted, Expr(Symbol('y')))
+
+        expr = Expr(Symbol('x'))
+        substituted = substitute(expr, Symbol('x'), 'y')
+        self.assertEqual(substituted, Expr(Symbol('y')))
+
+        expr = Expr(Symbol('x'))
+        substituted = substitute(expr, 'x', 'y')
+        self.assertEqual(substituted, Expr(Symbol('y')))
+
+        expr = Expr(Symbol('x'))
+        substituted = substitute(expr, 'x', 2)
+        self.assertEqual(substituted, Expr(2))
+
+        expr = Expr(Symbol('x'))
+        substituted = substitute(expr, 'y', 2)
+        self.assertEqual(substituted, expr)
+
+        expr = Expr('+', [
+            Expr('*', [Expr(Symbol('x')), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        substituted = substitute(expr, Symbol('x'), 5)
+        expected_substituted = Expr('+', [
+            Expr('*', [Expr(5), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        self.assertEqual(substituted, expected_substituted)
+
+        expr = Expr('+', [
+            Expr('*', [Expr(Symbol('x')), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        substituted = substitute(expr, Symbol('x'), Expr(5))
+        expected_substituted = Expr('+', [
+            Expr('*', [Expr(5), Expr(3)]),
+            Expr(Symbol('z'))
+        ])
+        self.assertEqual(substituted, expected_substituted)
+
+        expr = Expr('*', [
+            Expr(Symbol('x')),
+            Expr(3),
+            Expr(Symbol('z'))
+        ])
+        substituted = substitute(expr, '*', '+')
+        self.assertEqual(substituted, expr)
+
+        expr = Expr('*', [
+            Expr(Symbol('x')),
+            Expr(3),
+            Expr(Symbol('z'))
+        ])
+        substituted = substitute(expr, 'z', Expr(Symbol('x')))
+        expected_substituted = Expr('*', [
+            Expr(Symbol('x')),
+            Expr(3),
+            Expr(Symbol('x'))
+        ])
+        self.assertEqual(substituted, expected_substituted)
 
 
 if __name__ == '__main__':
