@@ -23,6 +23,10 @@ class TestExpr(unittest.TestCase):
         self.assertEqual(expr.value, 6)
         self.assertEqual(expr.operands, [])
 
+        expr = Expr(0)
+        self.assertEqual(expr.value, 0)
+        self.assertEqual(expr.operands, [])
+
         expr = Expr('+', [Expr(6), Expr(Symbol('y'))])
         self.assertEqual(expr.value, '+')
         self.assertEqual(expr.operands, [Expr(6), Expr(Symbol('y'))])

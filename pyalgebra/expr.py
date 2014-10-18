@@ -1,6 +1,6 @@
 from numbers import Number
 from collections import Counter
-from constants import *
+from .constants import *
 
 
 class Expr():
@@ -20,7 +20,7 @@ class Expr():
         value: (a terminal or operator) - The value.  Must be one listed in OPS.
         operands: (list of Exprs) - The operands (children) of this expression.
         """
-        if not value:
+        if value is None:
             raise ExprException('Node must have a value')
         if self.is_terminal(value):
             if not operands:

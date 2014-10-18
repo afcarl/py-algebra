@@ -1,6 +1,6 @@
 """Operations that can be used on expressions."""
 
-from expr import *
+from .expr import *
 
 
 def simplify(expr):

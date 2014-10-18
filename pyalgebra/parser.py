@@ -1,5 +1,5 @@
-from expr import *
-from constants import *
+from .expr import *
+from .constants import *
 
 class Parser():
     """Class that wraps methods related to parsing"""
